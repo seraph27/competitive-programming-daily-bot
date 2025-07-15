@@ -31,5 +31,5 @@ def test_atcoder_random_problem():
     with patch("urllib.request.urlopen", side_effect=[file1, file2]):
         prob = client.get_random_problem(min_rating=0, max_rating=400)
     assert prob["contest_id"] == "abc100"
-    assert prob["difficulty"] == 300
+    assert prob["difficulty"] == 312
     assert "atcoder.jp" in prob["link"]

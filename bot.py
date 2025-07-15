@@ -23,11 +23,11 @@ ac_client = AtCoderClient()
 
 async def send_daily_problem(channel: discord.TextChannel, platform: str, min_rating=None, max_rating=None):
     if platform == "codeforces":
-        problem = await cf_client.get_random_problem(min_rating, max_rating)
+        problem = cf_client.get_random_problem(min_rating, max_rating)
     else:
-        problem = await ac_client.get_random_problem(min_rating, max_rating)
+        problem = ac_client.get_random_problem(min_rating, max_rating)
     if not problem:
-        await channel.send(f"Failed to fetch {platform} problem.")
+        await channel.send(f"Failed to fetch {platform} problem.", ephemeral=True)
         return
     embed = discord.Embed(title=problem['title'], url=problem['link'], color=0x9B59B6)
     if problem.get("rating"):
@@ -36,29 +36,42 @@ async def send_daily_problem(channel: discord.TextChannel, platform: str, min_ra
     await channel.send(embed=embed)
 
 @bot.tree.command(name="random_cf", description="Get a random Codeforces problem")
-@discord.app_commands.describe(min_rating="Minimum rating", max_rating="Maximum rating")
+@discord.app_commands.describe(min_rating="Minimum difficulty", max_rating="Maximum difficulty")
 async def random_cf(interaction: discord.Interaction, min_rating: int | None = None, max_rating: int | None = None):
     await interaction.response.defer(ephemeral=True)
-    problem = await cf_client.get_random_problem(min_rating, max_rating)
+    problem = cf_client.get_random_problem(min_rating, max_rating)
     if not problem:
-        await interaction.followup.send("Failed to fetch problem", ephemeral=True)
+        await interaction.followup.send(f"Failed to fetch {platform} problem", ephemeral=True)
         return
-    embed = discord.Embed(title=problem['title'], url=problem['link'], color=0x9B59B6)
+    logger.info(problem)
+    embed = discord.Embed(title=problem['id']+'. '+problem['title'], url=problem['link'], color=0x9B59B6)
     if problem.get("rating"):
-        embed.add_field(name="Rating", value=str(problem['rating']))
-    embed.set_footer(text="Codeforces Random Problem")
+        embed.add_field(name="Difficulty", value=f"||{problem['rating']}||")
+    if problem.get("tags"):
+        tags = problem["tags"]
+        if isinstance(tags, list):
+            tags_str = " ".join(f"||{tag}||" for tag in tags)
+        else:
+            tags_str = f"||{tags}||"
+        embed.add_field(name="Tags", value=tags_str)
+    embed.set_footer(text="From Contest #" + str(problem['contestid']))
     await interaction.followup.send(embed=embed, ephemeral=True)
 
 @bot.tree.command(name="random_ac", description="Get a random AtCoder problem")
 @discord.app_commands.describe(min_rating="Minimum difficulty", max_rating="Maximum difficulty")
 async def random_ac(interaction: discord.Interaction, min_rating: int | None = None, max_rating: int | None = None):
     await interaction.response.defer(ephemeral=True)
-    problem = await ac_client.get_random_problem(min_rating, max_rating)
+    problem = ac_client.get_random_problem(min_rating, max_rating)
     if not problem:
         await interaction.followup.send("Failed to fetch problem", ephemeral=True)
         return
+    logger.info(problem)
     embed = discord.Embed(title=problem['title'], url=problem['link'], color=0x9B59B6)
-    embed.set_footer(text="AtCoder Random Problem")
+    if problem.get("difficulty"):
+        embed.add_field(name="Difficulty", value=f"||{problem['difficulty']}||")
+    else:
+        embed.add_field(name="Difficulty", value="N/A")
+    embed.set_footer(text="From " + str(problem['contest_id']))
     await interaction.followup.send(embed=embed, ephemeral=True)
 
 async def daily_task():

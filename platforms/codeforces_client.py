@@ -24,7 +24,8 @@ class CodeforcesClient:
         probs = []
         for p, stat in zip(data["result"]["problems"], data["result"]["problemStatistics"]):
             probs.append({
-                "id": f"{p.get('contestId')}{p.get('index')}",
+                "contestid": p.get('contestId'),
+                "id": p.get('index'),
                 "title": p.get("name"),
                 "link": f"https://codeforces.com/problemset/problem/{p.get('contestId')}/{p.get('index')}",
                 "rating": p.get("rating"),

@@ -28,7 +28,8 @@ class AtCoderClient:
             )
             with request.urlopen(req, timeout=10) as resp:
                 raw = resp.read()
-                if resp.headers.get("Content-Encoding") == "gzip":
+                headers = getattr(resp, "headers", {})
+                if getattr(headers, "get", lambda x: None)("Content-Encoding") == "gzip":
                     raw = gzip.decompress(raw)
                 return json.loads(raw.decode("utf-8"))
         except HTTPError as e:
@@ -56,23 +57,14 @@ class AtCoderClient:
         probs = []
         for p in data:
             pid = p.get("id")
-            raw = None
-            if pid in models:
-                raw = models[pid].get("difficulty")
-
-            if raw is None:
-                disp_diff = None
-            elif raw >= 400:
-                disp_diff = round(raw)
-            else:
-                disp_diff = round(400 / math.exp(1.0 - raw / 400))
+            disp_diff = models.get(pid, {}).get("difficulty")
 
             probs.append({
-                "id":         pid,
-                "title":      p.get("title"),
+                "id": pid,
+                "title": p.get("title"),
                 "contest_id": p.get("contest_id"),
                 "difficulty": disp_diff,
-                "link":       f"https://atcoder.jp/contests/{p.get('contest_id')}/tasks/{pid}"
+                "link": f"https://atcoder.jp/contests/{p.get('contest_id')}/tasks/{pid}",
             })
 
         self._cache = probs

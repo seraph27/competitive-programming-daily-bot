@@ -28,7 +28,8 @@ class AtCoderClient:
             )
             with request.urlopen(req, timeout=10) as resp:
                 raw = resp.read()
-                if resp.headers.get("Content-Encoding") == "gzip":
+                headers = getattr(resp, "headers", {})
+                if getattr(headers, "get", lambda x: None)("Content-Encoding") == "gzip":
                     raw = gzip.decompress(raw)
                 return json.loads(raw.decode("utf-8"))
         except HTTPError as e:

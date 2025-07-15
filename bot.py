@@ -5,7 +5,7 @@ import discord
 from discord.ext import commands
 from datetime import datetime
 from dotenv import load_dotenv
-
+from discord import app_commands
 from platforms import CodeforcesClient, AtCoderClient
 from utils.logger import setup_logging, get_logger
 from utils.database import SettingsDatabaseManager
@@ -14,6 +14,8 @@ load_dotenv()
 setup_logging()
 logger = get_logger("bot")
 
+GUILD_ID = 1376380498183589989
+GUILD = discord.Object(id=GUILD_ID)
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 POST_HOUR = int(os.getenv("POST_HOUR", "9"))
 
@@ -34,7 +36,12 @@ async def send_problem_embed(
         await channel.send(f"Failed to fetch {platform} problem.")
         return
 
-    title = problem.get("title") or f"{problem.get('id')}"
+    title = ""
+    if platform == "codeforces":
+        title = str(problem.get("id")) + ". " + str(problem.get("title"))
+    else:
+        title = str(problem.get("title"))
+
     embed = discord.Embed(
         title=title,
         url=problem.get("link"),
@@ -49,9 +56,9 @@ async def send_problem_embed(
         tags = problem.get("tags")
         if tags:
             if isinstance(tags, list):
-                tags_str = " ".join(f"`{t}`" for t in tags)
+                tags_str = " ".join(f"||{t}||" for t in tags)
             else:
-                tags_str = f"`{tags}`"
+                tags_str = f"||{tags}||"
             embed.add_field(name="🏷️ Tags", value=tags_str, inline=False)
         embed.set_footer(text=f"From Contest #{problem.get('contestid')}")
     else:
@@ -79,7 +86,6 @@ async def random_ac(interaction: discord.Interaction, min_rating: int | None = N
         return
     await send_problem_embed(interaction.channel, problem, "atcoder")
     await interaction.followup.send("Here is your AtCoder problem!", ephemeral=True)
-
 
 @bot.tree.command(name="set_channel", description="Set the channel for daily posts")
 @discord.app_commands.describe(channel="Destination channel")
@@ -150,6 +156,8 @@ async def on_ready():
     logger.info(f"Logged in as {bot.user}")
     try:
         synced = await bot.tree.sync()
+        guild_synced = await bot.tree.sync(guild=GUILD)
+        logger.info(f"Synced with {len(guild_synced)} guild #{GUILD_ID}")
         logger.info(f"Synced {len(synced)} commands")
     except Exception as e:
         logger.error(f"Failed to sync commands: {e}")

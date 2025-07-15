@@ -8,8 +8,6 @@ from dotenv import load_dotenv
 from platforms import CodeforcesClient, AtCoderClient
 from utils.logger import setup_logging, get_logger
 
-GUILD_ID = 1376380498183589989
-GUILD = discord.Object(id=GUILD_ID)
 load_dotenv()
 setup_logging()
 logger = get_logger("bot")
@@ -37,7 +35,7 @@ async def send_daily_problem(channel: discord.TextChannel, platform: str):
     embed.set_footer(text=f"{platform.title()} Daily Problem")
     await channel.send(embed=embed)
 
-@bot.tree.command(name="daily_cf", description="Get a random Codeforces problem", guilds=[GUILD])
+@bot.tree.command(name="daily_cf", description="Get a random Codeforces problem")
 async def daily_cf(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
     problem = await cf_client.get_random_problem()
@@ -50,7 +48,7 @@ async def daily_cf(interaction: discord.Interaction):
     embed.set_footer(text="Codeforces Random Problem")
     await interaction.followup.send(embed=embed, ephemeral=True)
 
-@bot.tree.command(name="daily_ac", description="Get a random AtCoder problem", guilds=[GUILD])
+@bot.tree.command(name="daily_ac", description="Get a random AtCoder problem")
 async def daily_ac(interaction: discord.Interaction):
     await interaction.response.defer(ephemeral=True)
     problem = await ac_client.get_random_problem()
@@ -76,12 +74,11 @@ async def daily_task():
 @bot.event
 async def on_ready():
     logger.info(f"Logged in as {bot.user}")
-    for guild in bot.guilds:
-        try:
-            synced = await bot.tree.sync(guild=guild)
-            logger.info(f"Synced {len(synced)} commands for {guild.name}")
-        except Exception as e:
-            logger.error(f"Failed to sync commands for {guild.id}: {e}")
+    try:
+        synced = await bot.tree.sync()
+        logger.info(f"Synced {len(synced)} commands")
+    except Exception as e:
+        logger.error(f"Failed to sync commands: {e}")
 
 if __name__ == "__main__":
     if not DISCORD_TOKEN:

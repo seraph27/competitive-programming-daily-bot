@@ -4,7 +4,7 @@ This bot posts random Codeforces and AtCoder problems to your Discord server eac
 
 ## Features
 - Fetches a random Codeforces and AtCoder problem daily
-- Simple slash commands `/daily_cf` and `/daily_ac`
+- Slash commands `/random_cf` and `/random_ac` support optional rating ranges
 - No LLM features
 
 ## Quick Start

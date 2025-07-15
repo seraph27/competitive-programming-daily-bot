@@ -34,9 +34,12 @@ class CodeforcesClient:
         self._cache = probs
         return self._cache
 
-    def get_random_problem(self, rating=None):
+    def get_random_problem(self, min_rating=None, max_rating=None):
+        """Return a random problem optionally filtered by a rating range."""
         self.fetch_all_problems()
         choices = self._cache
-        if rating:
-            choices = [p for p in choices if p.get("rating") == rating]
+        if min_rating is not None:
+            choices = [p for p in choices if p.get("rating") and p["rating"] >= min_rating]
+        if max_rating is not None:
+            choices = [p for p in choices if p.get("rating") and p["rating"] <= max_rating]
         return random.choice(choices) if choices else None

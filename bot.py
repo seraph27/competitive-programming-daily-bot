@@ -21,11 +21,11 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 cf_client = CodeforcesClient()
 ac_client = AtCoderClient()
 
-async def send_daily_problem(channel: discord.TextChannel, platform: str):
+async def send_daily_problem(channel: discord.TextChannel, platform: str, min_rating=None, max_rating=None):
     if platform == "codeforces":
-        problem = await cf_client.get_random_problem()
+        problem = await cf_client.get_random_problem(min_rating, max_rating)
     else:
-        problem = await ac_client.get_random_problem()
+        problem = await ac_client.get_random_problem(min_rating, max_rating)
     if not problem:
         await channel.send(f"Failed to fetch {platform} problem.")
         return
@@ -35,10 +35,11 @@ async def send_daily_problem(channel: discord.TextChannel, platform: str):
     embed.set_footer(text=f"{platform.title()} Daily Problem")
     await channel.send(embed=embed)
 
-@bot.tree.command(name="daily_cf", description="Get a random Codeforces problem")
-async def daily_cf(interaction: discord.Interaction):
+@bot.tree.command(name="random_cf", description="Get a random Codeforces problem")
+@discord.app_commands.describe(min_rating="Minimum rating", max_rating="Maximum rating")
+async def random_cf(interaction: discord.Interaction, min_rating: int | None = None, max_rating: int | None = None):
     await interaction.response.defer(ephemeral=True)
-    problem = await cf_client.get_random_problem()
+    problem = await cf_client.get_random_problem(min_rating, max_rating)
     if not problem:
         await interaction.followup.send("Failed to fetch problem", ephemeral=True)
         return
@@ -48,10 +49,11 @@ async def daily_cf(interaction: discord.Interaction):
     embed.set_footer(text="Codeforces Random Problem")
     await interaction.followup.send(embed=embed, ephemeral=True)
 
-@bot.tree.command(name="daily_ac", description="Get a random AtCoder problem")
-async def daily_ac(interaction: discord.Interaction):
+@bot.tree.command(name="random_ac", description="Get a random AtCoder problem")
+@discord.app_commands.describe(min_rating="Minimum difficulty", max_rating="Maximum difficulty")
+async def random_ac(interaction: discord.Interaction, min_rating: int | None = None, max_rating: int | None = None):
     await interaction.response.defer(ephemeral=True)
-    problem = await ac_client.get_random_problem()
+    problem = await ac_client.get_random_problem(min_rating, max_rating)
     if not problem:
         await interaction.followup.send("Failed to fetch problem", ephemeral=True)
         return

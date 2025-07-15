@@ -16,16 +16,20 @@ def test_codeforces_random_problem():
     fake_file = MagicMock()
     fake_file.__enter__.return_value = io.BytesIO(json.dumps(fake_response).encode())
     with patch("urllib.request.urlopen", return_value=fake_file):
-        prob = client.get_random_problem()
+        prob = client.get_random_problem(min_rating=800, max_rating=1000)
     assert prob["title"] == "Test"
     assert "codeforces.com" in prob["link"]
 
 def test_atcoder_random_problem():
     client = AtCoderClient()
-    fake_data = [{"id": "abc100_a", "title": "A", "contest_id": "abc100"}]
-    fake_file = MagicMock()
-    fake_file.__enter__.return_value = io.BytesIO(json.dumps(fake_data).encode())
-    with patch("urllib.request.urlopen", return_value=fake_file):
-        prob = client.get_random_problem()
+    problems_data = [{"id": "abc100_a", "title": "A", "contest_id": "abc100"}]
+    models_data = {"abc100_a": {"difficulty": 300}}
+    file1 = MagicMock()
+    file1.__enter__.return_value = io.BytesIO(json.dumps(problems_data).encode())
+    file2 = MagicMock()
+    file2.__enter__.return_value = io.BytesIO(json.dumps(models_data).encode())
+    with patch("urllib.request.urlopen", side_effect=[file1, file2]):
+        prob = client.get_random_problem(min_rating=0, max_rating=400)
     assert prob["contest_id"] == "abc100"
+    assert prob["difficulty"] == 300
     assert "atcoder.jp" in prob["link"]
